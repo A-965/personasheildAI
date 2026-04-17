@@ -1,260 +1,173 @@
-import React, { useState } from 'react';
-import '../styles/trust-dashboard.css';
+import React, { useState, useEffect } from 'react';
+import { 
+  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area
+} from 'recharts';
+import { Activity, ShieldAlert, CheckCircle, AlertTriangle, Download, Filter } from 'lucide-react';
+import { analyzeApi } from '../utils/api';
 
-export default function TrustDashboard({ onBack }) {
-  const [timeRange, setTimeRange] = useState('7d'); // 7d, 30d, all
-  const [selectedReport, setSelectedReport] = useState(null);
+export default function TrustDashboard() {
+  const [stats, setStats] = useState({
+    total_scans: 0,
+    fake_detected: 0,
+    real_content: 0,
+    suspicious_content: 0,
+    average_risk_score: 0,
+  });
+  const [history, setHistory] = useState([]);
+  const [timelineData, setTimelineData] = useState([]);
 
-  const mockReports = [
-    {
-      id: 1,
-      timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000),
-      source: 'YouTube - Viral Video',
-      riskScore: 89,
-      classification: 'LIKELY FAKE',
-      type: 'Live Shield',
-      signals: ['face_boundary', 'gan_fingerprint']
-    },
-    {
-      id: 2,
-      timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000),
-      source: 'News Clip - Interview',
-      riskScore: 15,
-      classification: 'REAL',
-      type: 'Media Analyzer',
-      signals: []
-    },
-    {
-      id: 3,
-      timestamp: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
-      source: 'Instagram Post',
-      riskScore: 62,
-      classification: 'SUSPICIOUS',
-      type: 'Media Analyzer',
-      signals: ['temporal_flicker', 'lip_sync_mismatch']
-    },
-    {
-      id: 4,
-      timestamp: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
-      source: 'TikTok - Entertainment',
-      riskScore: 78,
-      classification: 'LIKELY FAKE',
-      type: 'Live Shield',
-      signals: ['face_boundary', 'gan_fingerprint', 'blending_boundary']
-    },
-  ];
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const statsData = await analyzeApi.getStats();
+        setStats(statsData);
 
-  const stats = {
-    totalScans: mockReports.length,
-    fakeDetected: mockReports.filter(r => r.riskScore > 70).length,
-    averageRisk: Math.round(mockReports.reduce((sum, r) => sum + r.riskScore, 0) / mockReports.length),
-    realContent: mockReports.filter(r => r.riskScore < 30).length
-  };
+        const historyData = await analyzeApi.getHistory(20, 0);
+        setHistory(historyData);
 
-  const getRiskBadge = (score) => {
-    if (score > 70) return { icon: '🔴', label: 'FAKE', color: '#ef4444' };
-    if (score > 40) return { icon: '🟡', label: 'SUSPICIOUS', color: '#f59e0b' };
-    return { icon: '🟢', label: 'REAL', color: '#10b981' };
-  };
-
+        // Generate dynamic timeline from history
+        const timeline = historyData.map(h => {
+          const date = new Date(h.created_at);
+          return {
+            time: `${date.getHours()}:${date.getMinutes() < 10 ? '0' : ''}${date.getMinutes()}`,
+            risk: h.risk_score,
+            name: h.file_name
+          };
+        }).reverse();
+        setTimelineData(timeline);
+      } catch (err) {
+        console.error("Failed to load dashboard data", err);
+      }
+    }
+    loadData();
+  }, []);
   return (
-    <div className="trust-dashboard">
-      {/* Header */}
-      <div className="dashboard-header">
-        <button className="back-btn" onClick={onBack}>← Back</button>
-        <h1>📊 Trust Dashboard</h1>
+    <div className="max-w-6xl mx-auto pb-12">
+      <header className="mb-10 flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
+        <div>
+          <h2 className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white to-slate-400 mb-2 tracking-tight">Trust Dashboard</h2>
+          <p className="text-slate-400 font-medium">Review your detection history, risk timeline, and export forensic reports.</p>
+        </div>
+        <button className="flex items-center space-x-2 px-6 py-3 rounded-2xl glass-button text-white font-medium transition-all hover:-translate-y-1 hover:shadow-lg hover:shadow-primary-500/20">
+          <Download className="w-5 h-5 text-primary-400" />
+          <span>Export All Data</span>
+        </button>
+      </header>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="rounded-[2rem] glass-card p-6 relative overflow-hidden group">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-primary-500/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2 group-hover:bg-primary-500/20 transition-colors duration-500" />
+          <div className="flex items-center space-x-5 relative z-10">
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary-500/20 to-primary-600/10 border border-primary-500/20 text-primary-400 flex items-center justify-center shadow-inner">
+              <Activity className="w-8 h-8" />
+            </div>
+            <div>
+              <div className="text-xs uppercase tracking-[0.2em] text-slate-400 font-bold mb-1">Total Scans</div>
+              <div className="text-3xl font-black text-white tracking-tighter">{stats.total_scans}</div>
+            </div>
+          </div>
+        </div>
+
+        <div className="rounded-[2rem] glass-card p-6 relative overflow-hidden group">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-accent-fake/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2 group-hover:bg-accent-fake/20 transition-colors duration-500" />
+          <div className="flex items-center space-x-5 relative z-10">
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-accent-fake/20 to-red-600/10 border border-accent-fake/20 text-accent-fake flex items-center justify-center shadow-inner">
+              <ShieldAlert className="w-8 h-8" />
+            </div>
+            <div>
+              <div className="text-xs uppercase tracking-[0.2em] text-slate-400 font-bold mb-1">Fakes Blocked</div>
+              <div className="text-3xl font-black text-white tracking-tighter">{stats.fake_detected}</div>
+            </div>
+          </div>
+        </div>
+
+        <div className="rounded-[2rem] glass-card p-6 relative overflow-hidden group">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-accent-real/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2 group-hover:bg-accent-real/20 transition-colors duration-500" />
+          <div className="flex items-center space-x-5 relative z-10">
+            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-accent-real/20 to-green-600/10 border border-accent-real/20 text-accent-real flex items-center justify-center shadow-inner">
+              <CheckCircle className="w-8 h-8" />
+            </div>
+            <div>
+              <div className="text-xs uppercase tracking-[0.2em] text-slate-400 font-bold mb-1">Safe Content</div>
+              <div className="text-3xl font-black text-white tracking-tighter">{stats.real_content}</div>
+            </div>
+          </div>
+        </div>
       </div>
 
-      {!selectedReport ? (
-        <div className="dashboard-content">
-          {/* Stats Cards */}
-          <div className="stats-grid">
-            <div className="stat-card">
-              <div className="stat-icon">📊</div>
-              <div className="stat-info">
-                <p className="stat-label">Total Scans</p>
-                <p className="stat-value">{stats.totalScans}</p>
-              </div>
-            </div>
-
-            <div className="stat-card">
-              <div className="stat-icon">🔴</div>
-              <div className="stat-info">
-                <p className="stat-label">Fakes Detected</p>
-                <p className="stat-value">{stats.fakeDetected}</p>
-              </div>
-            </div>
-
-            <div className="stat-card">
-              <div className="stat-icon">🟢</div>
-              <div className="stat-info">
-                <p className="stat-label">Real Content</p>
-                <p className="stat-value">{stats.realContent}</p>
-              </div>
-            </div>
-
-            <div className="stat-card">
-              <div className="stat-icon">📈</div>
-              <div className="stat-info">
-                <p className="stat-label">Avg Risk Score</p>
-                <p className="stat-value">{stats.averageRisk}%</p>
-              </div>
-            </div>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 rounded-[2rem] glass-panel p-8">
+          <div className="flex justify-between items-center mb-8">
+            <h3 className="text-xl font-bold text-white tracking-tight">Risk Timeline</h3>
+            <select className="bg-dark-950/50 border border-white/10 text-slate-300 text-sm font-medium rounded-xl px-4 py-2 focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 backdrop-blur-md">
+              <option>Today</option>
+              <option>Last 7 Days</option>
+              <option>Last 30 Days</option>
+            </select>
           </div>
-
-          {/* Time Range Filter */}
-          <div className="filter-section">
-            <div className="time-filters">
-              {['7d', '30d', 'all'].map(range => (
-                <button
-                  key={range}
-                  className={`time-btn ${timeRange === range ? 'active' : ''}`}
-                  onClick={() => setTimeRange(range)}
-                >
-                  {range === '7d' ? 'Last 7 Days' : range === '30d' ? 'Last 30 Days' : 'All Time'}
-                </button>
-              ))}
-            </div>
-
-            <button className="export-btn">💾 Export Report</button>
+          <div className="h-80 w-full relative">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={timelineData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="colorRisk" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#8B5CF6" stopOpacity={0.4}/>
+                    <stop offset="95%" stopColor="#3B82F6" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+                <XAxis dataKey="time" stroke="rgba(255,255,255,0.2)" tick={{ fill: '#9CA3AF', fontSize: 12, fontWeight: 500 }} axisLine={false} tickLine={false} dy={10} />
+                <YAxis stroke="rgba(255,255,255,0.2)" tick={{ fill: '#9CA3AF', fontSize: 12, fontWeight: 500 }} axisLine={false} tickLine={false} dx={-10} />
+                <Tooltip 
+                  contentStyle={{ backgroundColor: 'rgba(15, 19, 29, 0.8)', backdropFilter: 'blur(12px)', borderColor: 'rgba(255,255,255,0.1)', borderRadius: '16px', color: '#F8FAFC', boxShadow: '0 20px 40px -10px rgba(0,0,0,0.5)' }}
+                  itemStyle={{ color: '#8B5CF6', fontWeight: 'bold' }}
+                />
+                <Area type="monotone" dataKey="risk" stroke="#8B5CF6" strokeWidth={4} fillOpacity={1} fill="url(#colorRisk)" activeDot={{ r: 6, fill: '#3B82F6', stroke: '#fff', strokeWidth: 2 }} />
+              </AreaChart>
+            </ResponsiveContainer>
           </div>
+        </div>
 
-          {/* Detection Timeline */}
-          <div className="timeline-section">
-            <h2>📅 Detection Timeline</h2>
-            <div className="timeline">
-              {mockReports.map((report, idx) => {
-                const badge = getRiskBadge(report.riskScore);
-                return (
-                  <div
-                    key={report.id}
-                    className="timeline-item"
-                    onClick={() => setSelectedReport(report)}
-                  >
-                    <div className="timeline-marker" style={{ backgroundColor: badge.color }}>
-                      {badge.icon}
-                    </div>
-                    <div className="timeline-content">
-                      <div className="timeline-header">
-                        <h4>{report.source}</h4>
-                        <span className="risk-badge" style={{ backgroundColor: badge.color }}>
-                          {badge.label}
-                        </span>
-                      </div>
-                      <p className="timeline-type">{report.type} • {report.riskScore}% risk</p>
-                      <p className="timeline-time">
-                        {formatTime(report.timestamp)}
-                      </p>
-                    </div>
-                    <div className="timeline-arrow">→</div>
+        <div className="rounded-[2rem] glass-panel p-8 flex flex-col relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-accent-cyan/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none" />
+          
+          <div className="flex justify-between items-center mb-6 relative z-10">
+            <h3 className="text-xl font-bold text-white tracking-tight">Recent Detections</h3>
+            <button className="w-10 h-10 rounded-xl glass-button flex items-center justify-center text-slate-400 hover:text-white transition-colors">
+              <Filter className="w-5 h-5" />
+            </button>
+          </div>
+          
+          <div className="space-y-3 overflow-y-auto flex-1 pr-2 relative z-10 custom-scrollbar">
+            {history.map((item) => (
+              <div key={item.id} className="p-4 rounded-2xl bg-dark-950/40 border border-white/5 hover:bg-white/5 transition-all duration-300 cursor-pointer group hover:scale-[1.02]">
+                <div className="flex justify-between items-start mb-3">
+                  <div className="font-semibold text-slate-200 truncate pr-2 group-hover:text-white transition-colors" title={item.file_name}>
+                    {item.file_name}
                   </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Risk Chart */}
-          <div className="chart-section">
-            <h2>📈 Risk Distribution</h2>
-            <div className="risk-distribution">
-              <div className="distribution-bar">
-                <div className="bar-section" style={{
-                  width: `${(stats.realContent / stats.totalScans * 100)}%`,
-                  backgroundColor: '#10b981'
-                }}>
-                  <span>Real ({stats.realContent})</span>
+                  <div className={`text-[10px] font-black uppercase tracking-wider px-2 py-1 rounded-lg border ${
+                    item.classification === 'LIKELY FAKE' ? 'bg-accent-fake/10 border-accent-fake/30 text-accent-fake shadow-[0_0_10px_rgba(239,68,68,0.2)]' :
+                    item.classification === 'SUSPICIOUS' ? 'bg-accent-suspicious/10 border-accent-suspicious/30 text-accent-suspicious shadow-[0_0_10px_rgba(245,158,11,0.2)]' :
+                    'bg-accent-real/10 border-accent-real/30 text-accent-real shadow-[0_0_10px_rgba(16,185,129,0.2)]'
+                  }`}>
+                    {item.classification}
+                  </div>
                 </div>
-                <div className="bar-section" style={{
-                  width: `${((stats.totalScans - stats.realContent - stats.fakeDetected) / stats.totalScans * 100)}%`,
-                  backgroundColor: '#f59e0b'
-                }}>
-                  <span>Suspicious</span>
-                </div>
-                <div className="bar-section" style={{
-                  width: `${(stats.fakeDetected / stats.totalScans * 100)}%`,
-                  backgroundColor: '#ef4444'
-                }}>
-                  <span>Fake ({stats.fakeDetected})</span>
+                <div className="flex justify-between items-center text-xs text-slate-500 font-medium">
+                  <span className="flex items-center space-x-1.5">
+                    <span className="w-2 h-2 rounded-full bg-primary-500/50"></span>
+                    <span className="uppercase tracking-wider">{item.media_type}</span>
+                  </span>
+                  <span>{new Date(item.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                 </div>
               </div>
-            </div>
+            ))}
           </div>
+          
+          <button className="w-full mt-6 py-3 text-sm font-bold text-primary-400 hover:text-primary-300 transition-colors uppercase tracking-widest relative z-10">
+            View All History →
+          </button>
         </div>
-      ) : (
-        <ReportDetail report={selectedReport} onBack={() => setSelectedReport(null)} />
-      )}
-    </div>
-  );
-}
-
-function ReportDetail({ report, onBack }) {
-  const badge = report.riskScore > 70 ? '🔴' : report.riskScore > 40 ? '🟡' : '🟢';
-  const label = report.riskScore > 70 ? 'FAKE' : report.riskScore > 40 ? 'SUSPICIOUS' : 'REAL';
-
-  return (
-    <div className="report-detail">
-      <button className="back-btn" onClick={onBack}>← Back to Dashboard</button>
-
-      <div className="report-header">
-        <h2>{report.source}</h2>
-        <p className="report-type">{report.type}</p>
-      </div>
-
-      <div className="report-main">
-        {/* Risk Score */}
-        <div className="report-risk">
-          <div className="risk-circle">
-            <span className="risk-score">{report.riskScore}%</span>
-            <span className="risk-label">{badge} {label}</span>
-          </div>
-        </div>
-
-        {/* Metadata */}
-        <div className="report-metadata">
-          <div className="metadata-item">
-            <span className="label">Detected:</span>
-            <span className="value">{report.timestamp.toLocaleString()}</span>
-          </div>
-          <div className="metadata-item">
-            <span className="label">Detection Type:</span>
-            <span className="value">{report.type}</span>
-          </div>
-        </div>
-
-        {/* Detection Signals */}
-        {report.signals.length > 0 && (
-          <div className="report-signals">
-            <h3>🔍 Detected Anomalies</h3>
-            <div className="signals-list">
-              {report.signals.map((signal, idx) => (
-                <div key={idx} className="signal-item">
-                  <span className="signal-icon">⚠️</span>
-                  <span className="signal-name">{signal}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Actions */}
-      <div className="report-actions">
-        <button className="btn-primary">📥 Download Report</button>
-        <button className="btn-secondary">🔗 Share</button>
-        <button className="btn-secondary">🗑️ Delete</button>
       </div>
     </div>
   );
-}
-
-function formatTime(date) {
-  const now = new Date();
-  const diff = now - date;
-  const hours = Math.floor(diff / (1000 * 60 * 60));
-  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-
-  if (hours < 1) return 'Just now';
-  if (hours < 24) return `${hours}h ago`;
-  if (days < 7) return `${days}d ago`;
-  return date.toLocaleDateString();
 }

@@ -1,192 +1,43 @@
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-dark-900 text-slate-200 overflow-hidden;
+  }
 }
 
-body {
-  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  min-height: 100vh;
-  background: radial-gradient(circle at top left, rgba(102, 126, 234, 0.3), transparent 30%),
-    radial-gradient(circle at bottom right, rgba(118, 75, 162, 0.35), transparent 28%),
-    linear-gradient(180deg, #1f2937 0%, #3b4252 100%);
-  color: #111827;
-  display: grid;
-  place-items: center;
-  padding: 24px;
+@layer utilities {
+  .glass-panel {
+    @apply bg-dark-800/40 backdrop-blur-xl border border-white/[0.05] shadow-2xl;
+  }
+  
+  .glass-card {
+    @apply bg-gradient-to-b from-white/[0.08] to-transparent backdrop-blur-md border border-white/[0.05] shadow-xl;
+  }
+
+  .glass-button {
+    @apply bg-white/5 hover:bg-white/10 backdrop-blur-md border border-white/10 transition-all duration-300;
+  }
+
+  .text-glow {
+    text-shadow: 0 0 20px rgba(59, 130, 246, 0.5);
+  }
 }
 
-#root {
-  width: min(560px, 100%);
-  min-height: 720px;
-  border-radius: 28px;
-  background: rgba(255, 255, 255, 0.95);
-  box-shadow: 0 40px 120px rgba(15, 23, 42, 0.3);
-  backdrop-filter: blur(18px);
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-}
-
-.app-container {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(246, 248, 252, 0.95) 100%);
-}
-
-/* Main Menu */
-.main-menu {
-  padding: 28px;
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-  height: 100%;
-  overflow-y: auto;
-}
-
-.menu-header {
-  text-align: center;
-  padding-bottom: 14px;
-  border-bottom: 1px solid rgba(148, 163, 184, 0.3);
-}
-
-.logo {
-  width: 64px;
-  height: 64px;
-  margin: 0 auto 14px;
-  display: grid;
-  place-items: center;
-  font-size: 32px;
-  border-radius: 18px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  box-shadow: 0 16px 35px rgba(102, 126, 234, 0.18);
-}
-
-.menu-header h1 {
-  font-size: 28px;
-  font-weight: 800;
-  color: #111827;
-  margin-bottom: 6px;
-}
-
-.menu-header p {
-  font-size: 14px;
-  color: #4b5563;
-  max-width: 82%;
-  margin: 0 auto;
-}
-
-/* Modes Grid */
-.modes-grid {
-  display: grid;
-  gap: 18px;
-  flex: 1;
-}
-
-.mode-card {
-  position: relative;
-  padding: 24px;
-  background: rgba(255, 255, 255, 0.84);
-  border: 1px solid rgba(148, 163, 184, 0.18);
-  border-radius: 24px;
-  cursor: pointer;
-  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
-  box-shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
-}
-
-.mode-card:hover {
-  transform: translateY(-4px);
-  border-color: rgba(102, 126, 234, 0.35);
-  box-shadow: 0 24px 54px rgba(15, 23, 42, 0.14);
-}
-
-.card-icon {
-  width: 52px;
-  height: 52px;
-  display: grid;
-  place-items: center;
-  font-size: 28px;
-  border-radius: 16px;
-  background: rgba(102, 126, 234, 0.12);
-  color: #4338ca;
-  margin-bottom: 18px;
-}
-
-.mode-card h2 {
-  font-size: 18px;
-  font-weight: 700;
-  color: #111827;
-}
-
-.mode-card p {
-  font-size: 14px;
-  color: #475569;
-  line-height: 1.6;
-  margin-bottom: 16px;
-}
-
-.features {
-  list-style: none;
-  font-size: 13px;
-  color: #16a34a;
-  margin-top: 4px;
-  padding-left: 0;
-  display: grid;
-  gap: 8px;
-}
-
-.features li::before {
-  content: '✓';
-  margin-right: 8px;
-  color: #059669;
-}
-
-.menu-footer {
-  text-align: center;
-  padding-top: 16px;
-  border-top: 1px solid rgba(148, 163, 184, 0.2);
-  font-size: 12px;
-  color: #64748b;
-}
-
-button {
-  border: none;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 600;
-  border-radius: 14px;
-  transition: all 0.2s ease;
-  padding: 12px 18px;
-}
-
-.back-btn {
-  background: transparent;
-  color: #4338ca;
-  padding: 10px 14px;
-  font-size: 14px;
-  margin-bottom: 18px;
-}
-
-.back-btn:hover {
-  background: rgba(102, 126, 234, 0.08);
-}
-
+/* Custom Scrollbar */
 ::-webkit-scrollbar {
   width: 8px;
+  height: 8px;
 }
-
 ::-webkit-scrollbar-track {
-  background: transparent;
+  background: rgba(15, 19, 29, 0.5);
 }
-
 ::-webkit-scrollbar-thumb {
-  background: rgba(148, 163, 184, 0.5);
-  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
 }
-
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(148, 163, 184, 0.8);
+  background: rgba(255, 255, 255, 0.2);
 }

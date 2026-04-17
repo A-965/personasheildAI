@@ -10,7 +10,8 @@ from app.database import get_db
 from app.models import Detection, AnalysisJob
 from app.schemas import (
     DetectionResponse, AnalysisJobResponse, URLAnalysisRequest,
-    FrameAnalysisRequest, DetectionHistoryItem, DashboardStats
+    FrameAnalysisRequest, DetectionHistoryItem, DashboardStats,
+    NewsAnalysisRequest, NewsAnalysisResponse
 )
 from app.services import DetectionService
 from app.services.claude_service import ClaudeService
@@ -147,7 +148,7 @@ async def analyze_frame(
     
     try:
         # Run detection on frame
-        result = await detection_service.analyze_frame(request.frame)
+        result = await detection_service.analyze_frame(request.frame, request.audio_data)
         
         # Convert signal objects to JSON-friendly format
         signals = [
@@ -155,12 +156,9 @@ async def analyze_frame(
             for signal in result.get('signals', [])
         ]
 
-        # Create or update detection record
-        detection = Detection(
-            file_name=f"frame_{request.timestamp}",
-            file_path="memory",
-            file_size=0,
-            media_type="image",
+        # Return directly without saving to DB to prevent lock errors
+        return DetectionResponse(
+            id=0,
             risk_score=result['risk_score'],
             classification=result['classification'],
             confidence=result['confidence'],
@@ -170,21 +168,43 @@ async def analyze_frame(
             temporal_consistency=result['temporal_consistency'],
             audio_visual_sync=result['audio_visual_sync'],
             blending_artifacts=result['blending_artifacts'],
-            explanation="Frame analysis in progress",
-            status="completed"
+            explanation="Live frame analyzed.",
+            file_name=f"frame_{request.timestamp}",
+            media_type="image",
+            created_at=datetime.utcnow()
         )
-        db.add(detection)
-        db.commit()
-        db.refresh(detection)
-        
-        # Generate explanation asynchronously (don't wait)
-        # In production, use task queue like Celery
-        
-        return _detection_to_response(detection)
         
     except Exception as e:
         logger.error(f"Error analyzing frame: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/news", response_model=NewsAnalysisResponse)
+async def analyze_news(request: NewsAnalysisRequest):
+    """Analyze written news text for misinformation and logical fallacies"""
+    try:
+        if not request.text or len(request.text.strip()) < 10:
+            raise HTTPException(status_code=400, detail="Text too short for analysis")
+            
+        result = await claude_service.analyze_news_text(request.text)
+        return NewsAnalysisResponse(**result)
+        
+    except Exception as e:
+        logger.error(f"Error analyzing news: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/{detection_id}", response_model=DetectionResponse)
+async def get_detection(
+    detection_id: int,
+    db: Session = Depends(get_db)
+):
+    """Get status and result of a specific detection"""
+    detection = db.query(Detection).filter(Detection.id == detection_id).first()
+    if not detection:
+        raise HTTPException(status_code=404, detail="Detection not found")
+        
+    return _detection_to_response(detection)
 
 
 @router.get("/history", response_model=List[DetectionHistoryItem])

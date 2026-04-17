@@ -18,24 +18,18 @@ export default defineConfig({
       }
     }
   ],
+  server: {
+    proxy: {
+      '/api': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+      }
+    }
+  },
   build: {
     outDir: 'dist',
     minify: 'terser',
     sourcemap: true,
-    rollupOptions: {
-      input: {
-        index: path.resolve(__dirname, 'index.html'),
-        popup: path.resolve(__dirname, 'public/popup.html'),
-        background: path.resolve(__dirname, 'public/background.js'),
-        content: path.resolve(__dirname, 'public/content.js'),
-      },
-      external: [],
-      output: {
-        entryFileNames: '[name].js',
-        chunkFileNames: 'chunks/[name].js',
-        assetFileNames: 'assets/[name].[ext]'
-      }
-    },
     commonjsOptions: {
       include: [/node_modules/]
     }

@@ -73,9 +73,28 @@ class URLAnalysisRequest(BaseModel):
     media_type: str = "auto"  # auto, image, video
 
 
+class NewsAnalysisRequest(BaseModel):
+    """Request for written news text analysis"""
+    text: str
+
+
+class NewsAnalysisResponse(BaseModel):
+    """Response for a completed news text analysis"""
+    risk_score: float = Field(..., ge=0, le=100)
+    classification: str  # REAL, SUSPICIOUS, FAKE
+    key_claims: List[str]
+    fallacies_detected: List[str]
+    verdict: str
+    explanation: str
+    
+    class Config:
+        from_attributes = True
+
+
 class FrameAnalysisRequest(BaseModel):
     """Request for single frame analysis (Live Shield)"""
     frame: str  # base64 encoded image
+    audio_data: Optional[str] = None  # base64 encoded audio
     timestamp: Optional[float] = None  # milliseconds
 
 

@@ -64,6 +64,86 @@ class ClaudeService:
         except Exception as e:
             logger.error(f"Error calling Claude API: {e}")
             return self._generate_default_explanation(risk_score, classification, signals)
+            
+            
+    async def analyze_news_text(self, text: str) -> dict:
+        """Analyze written news text for misinformation, fallacies, and bias"""
+        import json
+        
+        if not self.api_key:
+            return {
+                "risk_score": 50.0,
+                "classification": "SUSPICIOUS",
+                "key_claims": ["API Key Missing", "Unable to fully analyze claims"],
+                "fallacies_detected": ["Analysis skipped"],
+                "verdict": "Provide Claude API Key to enable Textual Analysis",
+                "explanation": "The text analysis engine is currently offline."
+            }
+            
+        try:
+            prompt = f"""You are PersonaShield AI's Textual Misinformation Engine.
+Analyze the following news excerpt or claim for potential misinformation, extreme bias, logical fallacies, and unsubstantiated claims.
+
+TEXT TO ANALYZE:
+\"\"\"
+{text}
+\"\"\"
+
+Perform a rigorous fact-checking analysis. Identify key claims made in the text. Evaluate them for logical consistency and known factual accuracy based on your training.
+Respond ONLY with a valid JSON object matching this exact structure:
+{{
+  "risk_score": <float between 0 and 100, where 100 is pure misinformation/propaganda>,
+  "classification": <"REAL", "SUSPICIOUS", or "FAKE">,
+  "key_claims": [<list of strings summarizing the 2-3 biggest claims>],
+  "fallacies_detected": [<list of strings of logical fallacies or manipulative language used, e.g., 'Strawman', 'Appeal to Emotion'>],
+  "verdict": <string, a concise 1-sentence final verdict>,
+  "explanation": <string, a detailed 3-4 sentence professional explanation of your risk score>
+}}
+"""
+            async with httpx.AsyncClient() as client:
+                response = await client.post(
+                    f"{self.base_url}/messages",
+                    headers={
+                        "x-api-key": self.api_key,
+                        "anthropic-version": "2023-06-01",
+                        "content-type": "application/json"
+                    },
+                    json={
+                        "model": self.model,
+                        "max_tokens": 1000,
+                        "messages": [
+                            {"role": "user", "content": prompt}
+                        ]
+                    },
+                    timeout=30.0
+                )
+            
+            if response.status_code == 200:
+                result = response.json()
+                content = result['content'][0]['text']
+                
+                # Extract JSON from potential markdown blocks
+                if "```json" in content:
+                    content = content.split("```json")[1].split("```")[0].strip()
+                elif "```" in content:
+                    content = content.split("```")[1].strip()
+                    
+                return json.loads(content)
+            else:
+                error_body = response.text
+                logger.error(f"Claude API error during news analysis: {response.status_code} - {error_body}")
+                raise Exception(f"Claude API Failed: {response.status_code}")
+                
+        except Exception as e:
+            logger.error(f"Error in analyze_news_text: {e}")
+            return {
+                "risk_score": 0.0,
+                "classification": "ERROR",
+                "key_claims": [],
+                "fallacies_detected": [],
+                "verdict": "Error processing text.",
+                "explanation": str(e)
+            }
     
     
     def _build_prompt(
@@ -80,21 +160,21 @@ class ClaudeService:
             for s in signals
         ])
         
-        prompt = f"""Analyze this deepfake detection result and provide a brief, clear explanation:
+        prompt = f"""You are PersonaShield AI, an advanced digital forensics and deepfake detection engine.
+Analyze the following detection results and generate a highly formal, professional, and objective forensic analysis report.
 
-Risk Score: {risk_score}%
-Classification: {classification}
+RISK SCORE: {risk_score}%
+CLASSIFICATION: {classification}
 
-Detected Signals:
+DETECTED ARTIFACT SIGNALS:
 {signal_text}
 
-Please provide:
-1. A brief summary of whether this is likely real or fake
-2. The main indicators of manipulation
-3. What specific artifacts suggest this classification
-4. Confidence level in the assessment
+Provide your response in the following structured format, using strictly professional, technical, and objective language suitable for a court or security audit:
+1. Executive Summary: A one-sentence definitive conclusion regarding the media's authenticity.
+2. Forensic Breakdown: Explain how the specific detected signals contribute to the risk score. Use technical terminology (e.g., GAN fingerprints, temporal discontinuity, adversarial noise).
+3. Confidence Level: State the confidence in this assessment based on the severity of the signals.
 
-Keep it concise and understandable for a general audience."""
+Do not use conversational language. Write as an automated, highly advanced cyber-security AI."""
         
         return prompt
     

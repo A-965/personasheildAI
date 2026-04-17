@@ -1,101 +1,53 @@
-// Utility functions for API communication
+import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:8000'; // Will change to production URL
+const api = axios.create({
+  baseURL: '/api',
+});
 
-export async function analyzeMedia(file) {
-  const formData = new FormData();
-  formData.append('file', file);
+export const analyzeApi = {
+  // Upload media file
+  uploadMedia: async (file) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    const response = await api.post('/analyze/', formData);
+    return response.data;
+  },
+
+  // Get detection result by ID
+  getDetectionResult: async (id) => {
+    const response = await api.get(`/analyze/${id}`);
+    return response.data;
+  },
+
+  // Analyze a single frame (base64)
+  analyzeFrame: async (base64Frame) => {
+    const response = await api.post('/analyze/frame', {
+      frame: base64Frame,
+      timestamp: Date.now()
+    });
+    return response.data;
+  },
+
+  // Analyze text for misinformation
+  analyzeNews: async (text) => {
+    const response = await api.post('/analyze/news', {
+      text: text
+    });
+    return response.data;
+  },
   
-  try {
-    const response = await fetch(`${API_BASE_URL}/api/analyze`, {
-      method: 'POST',
-      body: formData
-    });
-    
-    if (!response.ok) throw new Error(`API error: ${response.status}`);
-    return await response.json();
-  } catch (error) {
-    console.error('Analysis error:', error);
-    throw error;
+  // Get dashboard stats
+  getStats: async () => {
+    const response = await api.get('/analyze/stats');
+    return response.data;
+  },
+  
+  // Get history
+  getHistory: async (limit = 50, offset = 0) => {
+    const response = await api.get(`/analyze/history?limit=${limit}&offset=${offset}`);
+    return response.data;
   }
-}
+};
 
-export async function analyzeURL(url) {
-  try {
-    const response = await fetch(`${API_BASE_URL}/api/analyze/url`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ url })
-    });
-    
-    if (!response.ok) throw new Error(`API error: ${response.status}`);
-    return await response.json();
-  } catch (error) {
-    console.error('URL analysis error:', error);
-    throw error;
-  }
-}
-
-export async function analyzeFrame(frameData) {
-  try {
-    const response = await fetch(`${API_BASE_URL}/api/analyze/frame`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ frame: frameData })
-    });
-    
-    if (!response.ok) throw new Error(`API error: ${response.status}`);
-    return await response.json();
-  } catch (error) {
-    console.error('Frame analysis error:', error);
-    throw error;
-  }
-}
-
-export async function getDetectionHistory(limit = 50) {
-  return new Promise((resolve) => {
-    chrome.storage.local.get('detectionHistory', (data) => {
-      resolve((data.detectionHistory || []).slice(0, limit));
-    });
-  });
-}
-
-export async function saveDetection(detection) {
-  return new Promise((resolve) => {
-    chrome.storage.local.get('detectionHistory', (data) => {
-      const history = data.detectionHistory || [];
-      history.unshift({
-        ...detection,
-        id: Date.now(),
-        timestamp: new Date().toISOString()
-      });
-      
-      // Keep only last 200 detections
-      if (history.length > 200) {
-        history.pop();
-      }
-      
-      chrome.storage.local.set({ detectionHistory: history }, resolve);
-    });
-  });
-}
-
-export async function clearHistory() {
-  return new Promise((resolve) => {
-    chrome.storage.local.set({ detectionHistory: [] }, resolve);
-  });
-}
-
-export async function getSettings() {
-  return new Promise((resolve) => {
-    chrome.storage.local.get('settings', (data) => {
-      resolve(data.settings || {});
-    });
-  });
-}
-
-export async function updateSettings(settings) {
-  return new Promise((resolve) => {
-    chrome.storage.local.set({ settings }, resolve);
-  });
-}
+export default api;
