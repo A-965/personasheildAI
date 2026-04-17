@@ -1,0 +1,33 @@
+fastapi==0.104.1
+uvicorn==0.24.0
+sqlalchemy==2.0.23
+alembic==1.12.1
+python-dotenv==1.0.0
+pydantic==2.5.0
+pydantic-settings==2.1.0
+python-multipart==0.0.6
+
+# AI & Detection
+opencv-python==4.8.1.78
+torch==2.1.1
+torchvision==0.16.1
+mediapipe==0.10.8
+numpy==1.26.0
+pillow==10.1.0
+
+# Database
+# sqlite3 is built-in to Python, no need to pip install
+psycopg2-binary==2.9.9
+
+# API Integration
+httpx==0.25.2
+aiofiles==23.2.1
+
+# Authentication
+python-jose==3.3.0
+passlib==1.7.4
+bcrypt==4.1.1
+
+# Logging
+python-json-logger==2.0.7
+
