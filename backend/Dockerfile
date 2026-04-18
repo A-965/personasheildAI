@@ -15,8 +15,8 @@ RUN apt-get update && apt-get install -y \
 WORKDIR /app
 
 # Copy requirements and install
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+COPY requirements_prod.txt .
+RUN pip install --no-cache-dir -r requirements_prod.txt
 
 # Copy the rest of the code
 COPY . .
