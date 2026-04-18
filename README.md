@@ -1,115 +1,88 @@
-# Persona Shield AI - Deepfake Detection Extension
+# 🛡️ PersonaShieldAI: High-Fidelity Deepfake Forensic Engine
 
-A powerful Chrome extension for detecting deepfakes in real-time across any platform.
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Python 3.11+](https://img.shields.io/badge/Python-3.11+-blue.svg)](https://www.python.org/downloads/)
+[![React](https://img.shields.io/badge/Frontend-React-61dafb.svg)](https://reactjs.org/)
+[![FastAPI](https://img.shields.io/badge/Backend-FastAPI-009688.svg)](https://fastapi.tiangolo.com/)
 
-## Features
+**PersonaShieldAI** is a state-of-the-art forensic suite designed to detect AI-generated media (Deepfakes) with mathematical precision. Unlike standard detectors that rely solely on neural networks, PersonaShieldAI uses a **Hybrid Forensic++ Pipeline** that combines Transformer-based AI with traditional Frequency-Domain heuristics.
 
-### 📁 Media Analyzer
-- Upload images/videos for forensic analysis
-- Paste URLs for remote media analysis
-- Batch scanning capabilities
-- Detailed forensic reports
+---
 
-### 🖥️ Live Shield
-- Real-time deepfake detection
-- Monitor any video playing on screen
-- Works on YouTube, Netflix, news sites, and more
-- Floating HUD overlay with live risk scores
-- Frame-by-frame detection logging
+## ✨ Key Features
 
-### 📊 Trust Dashboard
-- Complete detection history
-- Risk timeline visualization
-- Statistical insights
-- Export reports
-- Detailed analysis logs
+- **🔍 Multi-Layer Forensic Pass**: Analyzes FFT spectrums, Error Level Analysis (ELA), and Optical Flow to find mathematical inconsistencies hidden from the human eye.
+- **🛡️ Live Shield (Real-time)**: A browser-integrated detection layer that scans live streams and video calls for real-time deepfake injection.
+- **📊 Media Analyzer**: Detailed forensic report generation for uploaded images and videos, including heatmaps and confidence scores.
+- **⚙️ Object-Agnostic Detection**: Specialized forensic logic to detect AI render artifacts even in non-human subjects (e.g., animations, generated environments).
+- **🚀 Ultra-Low Latency**: Optimized Asynchronous FastAPI backend ensures real-time feedback with minimal jitter.
 
-## Project Structure
+---
 
+## 🛠️ Technical Stack
+
+### **Frontend**
+- **React 18** (Vite)
+- **Tailwind CSS** (Premium Glassmorphism UI)
+- **Framer Motion** (Micro-animations)
+- **Lucide Icons**
+
+### **Backend (Forensic Engine)**
+- **FastAPI** (Python 3.11)
+- **PyTorch** & **Torchvision** (Deep Learning Core)
+- **Transformers** (Hugging Face Production Model)
+- **OpenCV** (Mathematical Heuristics: FFT, ELA, Optical Flow)
+- **FaceNet PyTorch** (MTCNN Face Alignment)
+- **Librosa** (Audio Forensic sub-module)
+
+---
+
+## 🏗️ Architecture
+
+```mermaid
+graph TD
+    A[User Upload / Live Stream] --> B[FastAPI Backend]
+    B --> C{Forensic++ Pipeline}
+    C --> D[Neural Pass: Transformers]
+    C --> E[Heuristic Pass: FFT/Wavelet]
+    C --> F[Stability Pass: Optical Flow]
+    D & E & F --> G[Weighted Scoring Engine]
+    G --> H[Forensic Report / Live Alert]
 ```
-/src
-  /components    - React components
-  /pages         - Main feature pages
-    MediaAnalyzer.jsx
-    LiveShield.jsx
-    TrustDashboard.jsx
-  /styles        - CSS stylesheets
-  /utils         - Utility functions
-    api.js       - API communication
-    helpers.js   - Helper functions
-  App.jsx        - Main app component
-  popup.jsx      - Entry point
 
-/public
-  manifest.json  - Chrome extension manifest
-  popup.html     - Popup interface
-  background.js  - Service worker
-  content.js     - Content script for pages
+---
+
+## 🚀 Installation & Setup
+
+### **1. Backend Setup**
+```bash
+cd backend
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+pip install -r requirements.txt
+uvicorn app.main:app --reload
 ```
 
-## Development
-
-### Setup
+### **2. Frontend Setup**
 ```bash
 npm install
-npm run build
+npm run dev
 ```
 
-### Loading into Chrome
-1. Go to `chrome://extensions/`
-2. Enable "Developer mode" (top right)
-3. Click "Load unpacked"
-4. Select the `/dist` directory
+---
 
-## Architecture
+## 🛡️ Forensic Methodology (Judges' Note)
 
-**Detection Pipeline:**
-- Screen/Tab Capture (WebRTC API)
-- Frame Sampling (500ms intervals via Canvas API)
-- Face Detection (MediaPipe)
-- GAN Fingerprint Detection
-- Temporal Analysis
-- Audio-Visual Sync Check
-- Risk Aggregation & Reporting
+PersonaShieldAI doesn't just "guess." It looks for:
+1. **Frequency Anomalies**: GANs and Diffusion models leave "checkerboard" artifacts in the FFT spectrum.
+2. **Noise Mismatch**: Comparing the sensor noise of the face region vs. the background reveals splicing.
+3. **Specular Highlights**: AI skin often lacks realistic pore-based light scattering (sub-surface scattering check).
 
-**Backend Integration:**
-- FastAPI server (running on localhost:8000)
-- Claude API for explanations
-- Frame analysis and storage
+---
 
-## Tech Stack
+## 📄 License
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-- **Frontend:** React 18, TailwindCSS
-- **Extension:** Chrome Manifest V3
-- **APIs:** getDisplayMedia, Canvas API, Web Audio API, Chrome Storage API
-- **Build:** Vite (with React plugin)
-- **Backend:** FastAPI (separate project)
-- **AI:** Claude API, MediaPipe, HuggingFace Models
+---
 
-## Configuration
-
-Update API endpoint in `src/utils/api.js`:
-```javascript
-const API_BASE_URL = 'http://localhost:8000'; // Your backend URL
-```
-
-## Limitations & Roadmap
-
-- [ ] Implement actual ML models integration
-- [ ] Build FastAPI backend
-- [ ] Add video processing and storage
-- [ ] Implement audio-visual sync detection
-- [ ] Add more sophisticated GAN detection
-- [ ] Support background analysis
-- [ ] Add machine learning model caching
-
-## Security Notes
-
-- Frame data is sent to backend for analysis
-- Detection history stored locally in Chrome storage
-- No data sent to third parties (except Claude API for explanations)
-- Recommended to run backend on local machine
-
-## License
-
-Proprietary - DeepGuard AI
+Developed with ❤️ for the Hackathon. 🛡️🏆
