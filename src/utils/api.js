@@ -1,7 +1,9 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: 'http://localhost:8000/api',
+  baseURL: window.location.hostname === 'localhost' 
+    ? 'http://localhost:8000/api' 
+    : 'https://personasheildai.onrender.com/api',
 });
 
 export const analyzeApi = {
