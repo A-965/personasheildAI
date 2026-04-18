@@ -124,42 +124,41 @@ export default function MediaAnalyzer() {
 
   return (
     <div className="max-w-4xl mx-auto pb-12">
-      <header className="mb-8">
-        <h2 className="text-3xl font-bold text-white mb-2">Media Analyzer</h2>
-        <p className="text-slate-400">Upload images or video files for comprehensive forensic analysis.</p>
+      <header className="mb-8 flex justify-between items-end">
+        <div>
+          <h2 className="text-3xl font-bold text-white mb-2">Media Analyzer</h2>
+          <p className="text-slate-400">Upload images or videos for comprehensive forensic analysis.</p>
+        </div>
+        {/* Redundant URL button removed - now integrated below */}
       </header>
 
       {!scanning && !result && (
-        <motion.div 
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className={`relative w-full h-80 rounded-[2rem] border-2 border-dashed flex flex-col items-center justify-center transition-all duration-300 overflow-hidden ${
-            dragActive ? 'border-primary-400 bg-primary-500/10' : 'border-white/10 glass-panel hover:border-primary-500/50 hover:bg-white/5'
-          }`}
-          onDragEnter={handleDrag}
-          onDragLeave={handleDrag}
-          onDragOver={handleDrag}
-          onDrop={handleDrop}
-        >
-          {dragActive && (
-            <div className="absolute inset-0 bg-primary-500/5 animate-pulse-slow pointer-events-none" />
-          )}
-          <input
-            type="file"
-            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-30"
-            onChange={handleChange}
-            accept="video/*,image/*"
-          />
-          <div className="w-24 h-24 rounded-full bg-dark-900/50 flex items-center justify-center mb-6 shadow-2xl ring-1 ring-white/5 group-hover:scale-110 transition-transform duration-500 relative z-20">
-            <UploadCloud className={`w-12 h-12 transition-colors duration-300 ${dragActive ? 'text-primary-400' : 'text-slate-400'}`} />
-          </div>
-          <h3 className="text-2xl font-bold text-white mb-2 tracking-wide drop-shadow-md relative z-20">Drag & drop your media here</h3>
-          <p className="text-slate-400 mb-8 text-sm font-medium relative z-20">Supports MP4, MOV, JPG, PNG (Max 50MB)</p>
-          <button className="relative px-8 py-4 rounded-2xl bg-gradient-to-r from-primary-600 to-indigo-600 hover:from-primary-500 hover:to-indigo-500 text-white font-semibold transition-all shadow-[0_0_40px_-10px_rgba(59,130,246,0.5)] hover:shadow-[0_0_60px_-15px_rgba(59,130,246,0.7)] z-20 overflow-hidden group pointer-events-none">
-            <span className="relative z-10">Browse Files</span>
-            <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
-          </button>
-        </motion.div>
+        <div className="space-y-6">
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className={`relative w-full h-64 rounded-[2rem] border-2 border-dashed flex flex-col items-center justify-center transition-all duration-300 overflow-hidden ${
+              dragActive ? 'border-primary-400 bg-primary-500/10' : 'border-white/10 glass-panel hover:border-primary-500/50 hover:bg-white/5'
+            }`}
+            onDragEnter={handleDrag}
+            onDragLeave={handleDrag}
+            onDragOver={handleDrag}
+            onDrop={handleDrop}
+          >
+            <input
+              type="file"
+              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-30"
+              onChange={handleChange}
+              accept="video/*,image/*"
+            />
+            <div className="w-16 h-16 rounded-full bg-dark-900/50 flex items-center justify-center mb-4 shadow-2xl ring-1 ring-white/5 relative z-20">
+              <UploadCloud className={`w-8 h-8 ${dragActive ? 'text-primary-400' : 'text-slate-400'}`} />
+            </div>
+            <h3 className="text-xl font-bold text-white mb-1 relative z-20">Drag & drop or Click to upload</h3>
+            <p className="text-slate-500 text-xs font-medium relative z-20">Supports MP4, MOV, JPG, PNG (Max 50MB)</p>
+          </motion.div>
+
+        </div>
       )}
 
       {scanning && (

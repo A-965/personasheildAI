@@ -16,6 +16,7 @@ class Detection(Base):
     file_path = Column(String)
     file_size = Column(Integer)  # in bytes
     media_type = Column(String)  # image, video, url
+    source_url = Column(String, nullable=True)  # Original URL if provided
     
     # Detection results
     risk_score = Column(Float, index=True)  # 0-100

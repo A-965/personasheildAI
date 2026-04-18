@@ -31,6 +31,7 @@ class DetectionResponse(BaseModel):
     explanation: Optional[str]
     file_name: str
     media_type: str
+    source_url: Optional[str] = None
     created_at: datetime
     
     class Config:
@@ -96,6 +97,7 @@ class FrameAnalysisRequest(BaseModel):
     frame: str  # base64 encoded image
     audio_data: Optional[str] = None  # base64 encoded audio
     timestamp: Optional[float] = None  # milliseconds
+    source_url: Optional[str] = None  # URL where the video is playing
 
 
 class BatchAnalysisRequest(BaseModel):
@@ -114,6 +116,7 @@ class DetectionHistoryItem(BaseModel):
     risk_score: float
     classification: str
     created_at: datetime
+    source_url: Optional[str] = None
     source: Optional[str]  # YouTube, Instagram, etc.
     
     class Config:

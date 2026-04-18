@@ -91,71 +91,69 @@ export default function LiveShield() {
     }
 
     const processFrame = async () => {
-      if (!videoRef.current || !canvasRef.current) return;
-      
-      const video = videoRef.current;
-      const canvas = canvasRef.current;
-      
-      // Ensure video is playing and has dimensions
-      if (video.videoWidth === 0 || video.videoHeight === 0) {
-        detectionLoopRef.current = setTimeout(processFrame, 500);
-        return;
-      }
-
-      // Resize frame to prevent 'Payload Too Large' API errors
-      const MAX_WIDTH = 640;
-      let width = video.videoWidth;
-      let height = video.videoHeight;
-      
-      if (width > MAX_WIDTH) {
-        height = Math.round((height * MAX_WIDTH) / width);
-        width = MAX_WIDTH;
-      }
-      
-      canvas.width = width;
-      canvas.height = height;
-      const ctx = canvas.getContext('2d');
-      ctx.drawImage(video, 0, 0, width, height);
-      
-      // Get base64 string (High quality JPEG preserves artifacts but saves massive bandwidth over PNG)
-      const frameBase64 = canvas.toDataURL('image/jpeg', 0.95);
-      
-      // Package audio data if available
-      let audioDataStr = null;
-      if (audioContext && audioProcessor) {
-        audioDataStr = "audio-buffer-present"; // Placeholder for actual base64 audio logic
-      }
-
       try {
-        // Send to analyzeFrame API. Update the API helper to accept audio later.
-        const response = await fetch('/api/analyze/frame', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ 
-            frame: frameBase64,
-            audio_data: audioDataStr,
-            timestamp: Date.now()
-          })
-        });
-        const result = await response.json();
+        if (!videoRef.current || !canvasRef.current) {
+          detectionLoopRef.current = setTimeout(processFrame, 500);
+          return;
+        }
+        
+        const video = videoRef.current;
+        const canvas = canvasRef.current;
+        
+        // Ensure video is playing and has dimensions
+        if (video.videoWidth === 0 || video.videoHeight === 0) {
+          setSignals([`⚠️ Video paused or width is 0. (ReadyState: ${video.readyState})`]);
+          video.play().catch(e => console.error("Play prevented:", e));
+          if (isActive) {
+            detectionLoopRef.current = setTimeout(processFrame, 500);
+          }
+          return;
+        }
+
+        const MAX_WIDTH = 640;
+        let width = video.videoWidth;
+        let height = video.videoHeight;
+        
+        if (width > MAX_WIDTH) {
+          height = Math.round((height * MAX_WIDTH) / width);
+          width = MAX_WIDTH;
+        }
+        
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(video, 0, 0, width, height);
+        
+        const frameBase64 = canvas.toDataURL('image/jpeg', 0.95);
+        let audioDataStr = null;
+
+        const result = await analyzeApi.analyzeFrame(
+          frameBase64, 
+          audioDataStr, 
+          window.demoContextUrl || ''
+        );
         
         setRiskScore(result.risk_score || 0);
-        
         if (result.signals && result.signals.length > 0) {
           setSignals(result.signals.map(s => `⚠️ ${s.description}`));
         } else {
-          setSignals(['✓ Authentic frames detected']);
+          setSignals([`✓ Analyzing (${Math.round(result.risk_score)}%)`]);
         }
       } catch (err) {
         console.error("Frame analysis failed:", err);
-        // If the backend fails or proxy drops, show a spike so we know it's a network error, not a '0% real' result
-        setSignals(['⚠️ API Connection Failed - Please Hard Refresh (Cmd+Shift+R)']);
+        setRiskScore(99); 
+        setSignals([`⚠️ ERROR: ${err.message}`]);
       }
       
-      // Schedule next frame (ensure we use the latest function reference)
-      if (isActive) {
-        detectionLoopRef.current = setTimeout(processFrame, 2000);
-      }
+        if (isActive) {
+          detectionLoopRef.current = setTimeout(processFrame, 800);
+        }
+      };
+    
+    // Add Demo Override capability for Hackathon
+    window.setDemoScore = (score) => {
+      setRiskScore(score);
+      setSignals([`⚠️ DEMO OVERRIDE: Score forced to ${score}%`]);
     };
     
     // Start the loop
@@ -295,7 +293,16 @@ export default function LiveShield() {
             </AnimatePresence>
           </div>
 
-          <div className="mt-8 flex justify-center relative z-10">
+          <div className="mt-8 flex flex-col items-center relative z-10 space-y-4">
+            <div className="w-full max-w-md relative">
+               <input
+                 type="text"
+                 placeholder="Optional: Enter Source URL for Smart Context Analysis..."
+                 className="w-full bg-dark-900/50 border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-primary-500/50 transition-all"
+                 onChange={(e) => { window.demoContextUrl = e.target.value; }}
+               />
+            </div>
+            
             {!isActive ? (
               <button 
                 onClick={startCapture}

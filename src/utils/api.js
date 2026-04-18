@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: '/api',
+  baseURL: 'http://localhost:8000/api',
 });
 
 export const analyzeApi = {
@@ -20,11 +20,13 @@ export const analyzeApi = {
     return response.data;
   },
 
-  // Analyze a single frame (base64)
-  analyzeFrame: async (base64Frame) => {
+  // Analyze single frame (Live Shield)
+  analyzeFrame: async (frameBase64, audioBase64 = null, sourceUrl = '') => {
     const response = await api.post('/analyze/frame', {
-      frame: base64Frame,
-      timestamp: Date.now()
+      frame: frameBase64,
+      audio_data: audioBase64,
+      timestamp: Date.now(),
+      source_url: sourceUrl
     });
     return response.data;
   },
@@ -33,6 +35,15 @@ export const analyzeApi = {
   analyzeNews: async (text) => {
     const response = await api.post('/analyze/news', {
       text: text
+    });
+    return response.data;
+  },
+
+  // Analyze media from URL
+  analyzeUrl: async (url) => {
+    const response = await api.post('/analyze/url', {
+      url: url,
+      media_type: 'auto'
     });
     return response.data;
   },

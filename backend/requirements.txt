@@ -16,6 +16,7 @@ numpy==1.26.0
 pillow==10.1.0
 librosa==0.10.1
 soundfile==0.12.1
+transformers>=4.35.0
 
 # Database
 # sqlite3 is built-in to Python, no need to pip install
@@ -33,3 +34,6 @@ bcrypt==4.1.1
 # Logging
 python-json-logger==2.0.7
 
+transformers>=4.30.0
+facenet-pytorch>=2.5.2
+pillow>=9.5.0

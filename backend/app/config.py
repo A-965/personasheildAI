@@ -17,11 +17,7 @@ class Settings(BaseSettings):
     
     # API
     API_PREFIX: str = "/api"
-    ALLOWED_ORIGINS: list = [
-        "http://localhost:3000",
-        "http://localhost:8000",
-        "chrome-extension://*"
-    ]
+    ALLOWED_ORIGINS: list = ["*"]
     
     # Claude API
     CLAUDE_API_KEY: str = ""

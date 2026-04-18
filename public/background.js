@@ -21,7 +21,7 @@ chrome.runtime.onInstalled.addListener(() => {
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === 'analyzeFrame') {
     // Forward frame data to backend API
-    handleFrameAnalysis(request.frameData, sender.tab?.id)
+    handleFrameAnalysis(request.frameData, sender.tab?.id, request.sourceUrl)
       .then(result => sendResponse({ success: true, result }))
       .catch(error => sendResponse({ success: false, error: error.message }));
     
@@ -74,14 +74,14 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   }
 });
 
-async function handleFrameAnalysis(frameData, tabId) {
+async function handleFrameAnalysis(frameData, tabId, sourceUrl) {
   try {
     const response = await fetch(`${BACKEND_API_URL}/api/analyze/frame`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ frame: frameData, timestamp: Date.now() })
+      body: JSON.stringify({ frame: frameData, timestamp: Date.now(), source_url: sourceUrl })
     });
 
     if (!response.ok) {

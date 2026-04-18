@@ -93,8 +93,10 @@ async def analyze_url(
     
     try:
         import httpx
+        import tempfile
+        import uuid
+        import os
         
-        # Download file
         async with httpx.AsyncClient() as client:
             response = await client.get(request.url, timeout=30.0)
             response.raise_for_status()
@@ -115,6 +117,7 @@ async def analyze_url(
             file_path=file_path,
             file_size=len(response.content),
             media_type=media_type,
+            source_url=request.url,
             status="processing"
         )
         db.add(detection)
@@ -126,7 +129,8 @@ async def analyze_url(
             _process_detection,
             detection_id=detection.id,
             file_path=file_path,
-            media_type=media_type
+            media_type=media_type,
+            source_url=request.url
         )
         
         return _detection_to_response(detection)
@@ -148,7 +152,7 @@ async def analyze_frame(
     
     try:
         # Run detection on frame
-        result = await detection_service.analyze_frame(request.frame, request.audio_data)
+        result = await detection_service.analyze_frame(request.frame, request.audio_data, request.source_url)
         
         # Convert signal objects to JSON-friendly format
         signals = [
@@ -171,6 +175,7 @@ async def analyze_frame(
             explanation="Live frame analyzed.",
             file_name=f"frame_{request.timestamp}",
             media_type="image",
+            source_url=request.source_url,
             created_at=datetime.utcnow()
         )
         
@@ -192,36 +197,6 @@ async def analyze_news(request: NewsAnalysisRequest):
     except Exception as e:
         logger.error(f"Error analyzing news: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=str(e))
-
-
-@router.get("/{detection_id}", response_model=DetectionResponse)
-async def get_detection(
-    detection_id: int,
-    db: Session = Depends(get_db)
-):
-    """Get status and result of a specific detection"""
-    detection = db.query(Detection).filter(Detection.id == detection_id).first()
-    if not detection:
-        raise HTTPException(status_code=404, detail="Detection not found")
-        
-    return _detection_to_response(detection)
-
-
-@router.get("/history", response_model=List[DetectionHistoryItem])
-async def get_detection_history(
-    limit: int = 50,
-    offset: int = 0,
-    db: Session = Depends(get_db)
-):
-    """Get detection history"""
-    
-    detections = db.query(Detection)\
-        .order_by(Detection.created_at.desc())\
-        .offset(offset)\
-        .limit(limit)\
-        .all()
-    
-    return [_detection_to_history(d) for d in detections]
 
 
 @router.get("/stats", response_model=DashboardStats)
@@ -259,12 +234,43 @@ async def get_dashboard_stats(db: Session = Depends(get_db)):
     )
 
 
+@router.get("/history", response_model=List[DetectionHistoryItem])
+async def get_detection_history(
+    limit: int = 50,
+    offset: int = 0,
+    db: Session = Depends(get_db)
+):
+    """Get detection history"""
+    
+    detections = db.query(Detection)\
+        .order_by(Detection.created_at.desc())\
+        .offset(offset)\
+        .limit(limit)\
+        .all()
+    
+    return [_detection_to_history(d) for d in detections]
+
+
+@router.get("/{detection_id}", response_model=DetectionResponse)
+async def get_detection(
+    detection_id: int,
+    db: Session = Depends(get_db)
+):
+    """Get status and result of a specific detection"""
+    detection = db.query(Detection).filter(Detection.id == detection_id).first()
+    if not detection:
+        raise HTTPException(status_code=404, detail="Detection not found")
+        
+    return _detection_to_response(detection)
+
+
 # ==================== Background Tasks ====================
 
 async def _process_detection(
     detection_id: int,
     file_path: str,
-    media_type: str
+    media_type: str,
+    source_url: Optional[str] = None
 ):
     """Background task to process detection"""
     from sqlalchemy import create_engine
@@ -281,9 +287,9 @@ async def _process_detection(
         
         # Run detection
         if media_type == "image":
-            result = await detection_service.analyze_image(file_path)
+            result = await detection_service.analyze_image(file_path, source_url=source_url)
         else:
-            result = await detection_service.analyze_video(file_path)
+            result = await detection_service.analyze_video(file_path, source_url=source_url)
         
         # Update detection with results
         detection.risk_score = result['risk_score']
@@ -336,6 +342,7 @@ def _detection_to_response(detection: Detection) -> DetectionResponse:
         explanation=detection.explanation or "Analyzing...",
         file_name=detection.file_name,
         media_type=detection.media_type,
+        source_url=detection.source_url,
         created_at=detection.created_at
     )
 

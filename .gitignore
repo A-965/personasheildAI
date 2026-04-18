@@ -10,3 +10,11 @@ dist/
 *.swo
 *~
 .npmrc
+
+# Python
+venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+*.db
+backend/deepguard.db

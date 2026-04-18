@@ -76,7 +76,8 @@ async function startScreenCapture() {
       // Send frame to background script for analysis and update HUD
       chrome.runtime.sendMessage({
         action: 'analyzeFrame',
-        frameData: frameData
+        frameData: frameData,
+        sourceUrl: window.location.href + '?title=' + encodeURIComponent(document.title)
       }, (response) => {
         if (chrome.runtime.lastError) {
           console.error('Runtime message error:', chrome.runtime.lastError.message);
