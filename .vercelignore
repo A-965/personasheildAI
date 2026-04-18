@@ -1,0 +1,9 @@
+backend/
+venv/
+__pycache__/
+*.pyc
+deepguard.db
+Dockerfile
+.dockerignore
+runtime.txt
+.python-version
