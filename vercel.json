@@ -1,12 +1,7 @@
 {
-  "experimentalServices": {
-    "frontend": {
-      "routePrefix": "/",
-      "framework": "vite"
-    },
-    "backend": {
-      "entrypoint": "backend",
-      "routePrefix": "/_backend"
-    }
-  }
+  "framework": "vite",
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "https://your-backend-on-render.onrender.com/api/$1" },
+    { "source": "/(.*)", "destination": "/" }
+  ]
 }
