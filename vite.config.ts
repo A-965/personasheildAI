@@ -30,6 +30,16 @@ export default defineConfig({
     outDir: 'dist',
     minify: 'terser',
     sourcemap: true,
+    chunkSizeWarningLimit: 1600,
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            return 'vendor';
+          }
+        }
+      }
+    },
     commonjsOptions: {
       include: [/node_modules/]
     }
